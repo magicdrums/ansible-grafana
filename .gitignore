@@ -1,0 +1,8 @@
+all
+hosts
+
+vars/
+group_vars/
+
+*.retry
+

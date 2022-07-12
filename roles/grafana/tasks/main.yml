@@ -1,0 +1,40 @@
+---
+- name: Install software
+  package:
+    name:
+      - vim
+      - wget
+      - git
+      - htop
+    state: latest
+
+- name: Install repo grafana 
+  copy:
+    src: grafana.repo
+    dest: /etc/yum.repos.d/grafana.repo
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - update all
+
+- name: Install Grafana
+  package:
+    name:
+      - grafana
+    state: latest
+  notify: 
+    - daemon reload
+
+- name: start grafana
+  systemd:
+    state: started
+    name: grafana-server
+
+- name: Enable port 3000/TCP for grafana Dashboard UI
+  firewalld:
+    zone: public
+    port: 3000/tcp
+    permanent: yes
+    state: enabled
+    immediate: true
