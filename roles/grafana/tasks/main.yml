@@ -1,4 +1,10 @@
 ---
+- name: Install repo epel
+  package:
+    name:
+      - epel-release
+    state: latest
+
 - name: Install software
   package:
     name:
@@ -26,10 +32,40 @@
   notify: 
     - daemon reload
 
+- name: Create config to start Grafana
+  template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    
 - name: start grafana
   systemd:
     state: started
     name: grafana-server
+    enabled: yes
+
+- name: Create API Key on Grafana to create Local User and Dashboards Panel
+  uri:
+    url: "http://localhost:3000/api/auth/keys"
+    method: POST
+    return_content: yes
+    body: "{{ item | to_json }}"
+    body_format: json
+    validate_certs: no
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: yes
+  with_items: "{{ grafana_api_keys }}"
+  register: apikey
+
+- name: Create api keys file to allow the keys to be seen and used by other automation
+  become: false
+  copy:
+    dest: "Api-keys/{{ item['item']['name'] }}.key"
+    content: "{{ item['json']['key'] }}"
+    backup: false
+  when: item['json'] is defined
+  with_items: "{{ apikey['results'] }}"
+  delegate_to: localhost
 
 - name: Enable port 3000/TCP for grafana Dashboard UI
   firewalld:

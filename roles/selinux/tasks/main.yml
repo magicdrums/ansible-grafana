@@ -1,0 +1,13 @@
+---
+- name: Install software
+  package:
+    name:
+      - python3-libselinux
+      - policycoreutils-python-utils
+    state: latest
+
+- name: Set allow Nginx connect to localhost
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+    persistent: yes
